@@ -1,0 +1,14 @@
+body {
+    margin: 0;
+    background: #333333;
+}
+
+*:focus {
+    outline: none;
+}
+
+#content {
+    margin: 0 auto;
+    width: 1024px;
+
+}
