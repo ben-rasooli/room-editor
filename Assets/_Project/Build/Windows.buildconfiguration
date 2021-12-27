@@ -6,7 +6,7 @@
         {
             "$type": "Unity.Build.DotsRuntime.DotsRuntimeBuildProfile, Unity.Build.DotsRuntime",
             "Target": "windows-dotnet",
-            "Configuration": 2,
+            "Configuration": 1,
             "UseNewPipeline": false,
             "PipelineConstructor": null
         },
@@ -51,6 +51,14 @@
             "AutoResizeFrame": true,
             "DisableVsync": false,
             "GPUSkinning": false
+        },
+        {
+            "$type": "Unity.Build.Common.ScreenOrientations, Unity.Build",
+            "DefaultOrientation": 4,
+            "AllowAutoRotateToPortrait": true,
+            "AllowAutoRotateToReversePortrait": true,
+            "AllowAutoRotateToLandscape": true,
+            "AllowAutoRotateToReverseLandscape": true
         }
     ]
 }

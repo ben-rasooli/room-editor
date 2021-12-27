@@ -1,6 +1,5 @@
 #region usings
 using Unity.Entities;
-using Unity.Tiny;
 using Unity.Transforms;
 #endregion
 

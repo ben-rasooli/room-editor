@@ -49,14 +49,36 @@ namespace Project
       if (HasComponent<SaveRoomData_command>(_eventsHolderEntity))
       {
         var roomJsonData = new TinyJsonStreamingWriter(Allocator.Temp);
+        // --------------- panels
         roomJsonData.PushArrayField("panels");
-        Entities.
-          WithAll<Panel_tag>()
+        Entities
+          .WithAll<Panel_tag>()
           .ForEach((in PanelData panelData, in Translation translation, in Rotation rotation) =>
           {
             roomJsonData.PushObjectToArray();
             roomJsonData.PushValueField("height", panelData.Height);
             roomJsonData.PushValueField("thickness", panelData.Thickness);
+            roomJsonData.PushObjectField("position");
+            roomJsonData.PushValueField("x", translation.Value.x);
+            roomJsonData.PushValueField("y", translation.Value.y);
+            roomJsonData.PushValueField("z", translation.Value.z);
+            roomJsonData.PopObject();
+            roomJsonData.PushObjectField("rotation");
+            roomJsonData.PushValueField("x", rotation.Value.value.x);
+            roomJsonData.PushValueField("y", rotation.Value.value.y);
+            roomJsonData.PushValueField("z", rotation.Value.value.z);
+            roomJsonData.PushValueField("w", rotation.Value.value.w);
+            roomJsonData.PopObject();
+            roomJsonData.PopObject();
+          }).WithoutBurst().Run();
+        roomJsonData.PopArray();
+        // --------------- doors
+        roomJsonData.PushArrayField("doors");
+        Entities
+          .WithAll<Door_tag>()
+          .ForEach((in Translation translation, in Rotation rotation) =>
+          {
+            roomJsonData.PushObjectToArray();
             roomJsonData.PushObjectField("position");
             roomJsonData.PushValueField("x", translation.Value.x);
             roomJsonData.PushValueField("y", translation.Value.y);
@@ -83,8 +105,7 @@ namespace Project
           GetBuffer<PanelDetails>(
             GetSingletonEntity<SceneSettings>()
           );
-
-        //var doorsData = _roomJsonData.Object["doors"].AsArray();
+        // --------------- panels
         var panelsData = _roomJsonData.Object["panels"].AsArray();
         foreach (var panel in panelsData)
         {
@@ -95,13 +116,26 @@ namespace Project
             if (details.Thickness == panel["thickness"].AsInt() && details.Height == panel["height"].AsInt())
               panelDetails = details;
 
-          var panelAddDetails = new PanelAddDetails
+          var addPanelRequestCommand = new AddPanelRequest_command
           {
             Position = position,
             Rotation = rotation,
             PanelDetails = panelDetails
           };
-          ECB.CreateSingleFrameComponent(panelAddDetails);
+          ECB.CreateSingleFrameComponent(addPanelRequestCommand);
+        }
+        // --------------- doors
+        var doorsData = _roomJsonData.Object["doors"].AsArray();
+        foreach (var door in doorsData)
+        {
+          var position = new float3(door["position"]["x"].AsFloat(), door["position"]["y"].AsFloat(), door["position"]["z"].AsFloat());
+          var rotation = new float4(door["rotation"]["x"].AsFloat(), door["rotation"]["y"].AsFloat(), door["rotation"]["z"].AsFloat(), door["rotation"]["w"].AsFloat());
+          var addDoorRequestCommand = new AddDoorRequest_command
+          {
+            Position = position,
+            Rotation = rotation
+          };
+          ECB.CreateSingleFrameComponent(addDoorRequestCommand);
         }
         _roomJsonData.Dispose();
       }

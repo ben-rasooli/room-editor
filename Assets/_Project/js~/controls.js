@@ -39,23 +39,23 @@ mergeInto(LibraryManager.library, {
         URL.revokeObjectURL(a.href);
     }
 
-    //,
-    //GetRoomData: function (onSuccess) {
-    //    fetch('https://api.npoint.io/70d3c4a116b984c81f12', {
-    //        method: 'GET',
-    //        headers: {
-    //            'Content-Type': 'application/json'
-    //        }
-    //    })
-    //        .then((response) => response.json())
-    //        .then((json) => {
-    //            console.log(json);
-    //            var jsonStr = JSON.stringify(json);
-    //            var bufferSize = lengthBytesUTF8(jsonStr) + 1;
-    //            var buffer = _malloc(bufferSize);
-    //            stringToUTF8(jsonStr, buffer, bufferSize);
-    //            dynCall_vi(onSuccess, buffer);
-    //            _free(buffer);
-    //        });
-    //}
+    ,
+    GetPriceList: function (onSuccess) {
+        fetch('https://api.npoint.io/68abfcc96bd86372d1d1', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(json);
+                var jsonStr = JSON.stringify(json);
+                var bufferSize = lengthBytesUTF8(jsonStr) + 1;
+                var buffer = _malloc(bufferSize);
+                stringToUTF8(jsonStr, buffer, bufferSize);
+                dynCall_vi(onSuccess, buffer);
+                _free(buffer);
+            });
+    }
 });

@@ -38,23 +38,23 @@ namespace Project
     protected override void OnUpdate()
     {
       // Touch
-      if (m_InputSystem.IsTouchSupported() && m_InputSystem.TouchCount() > 0)
+      if (m_InputSystem.IsTouchSupported())
       {
-        for (var i = 0; i < m_InputSystem.TouchCount(); i++)
+        if (m_InputSystem.TouchCount() == 1)
         {
-          var touch = m_InputSystem.GetTouch(i);
+          var touch = m_InputSystem.GetTouch(0);
           var inputPos = new float2(touch.x, touch.y);
 
           switch (touch.phase)
           {
             case TouchState.Began:
               _pointerDownPosition = inputPos;
-              OnInputDown(i, inputPos);
+              OnInputDown(0, inputPos);
               break;
 
             case TouchState.Moved:
               var inputDelta = new float2(touch.deltaX, touch.deltaY);
-              OnInputMove(i, inputPos, inputDelta);
+              OnInputMove(0, inputPos, inputDelta);
               break;
 
             case TouchState.Stationary:
@@ -63,12 +63,22 @@ namespace Project
             case TouchState.Ended:
               if (math.distancesq(inputPos, _pointerDownPosition) < _pointerClickThreshold)
                 OnInputClick(-1, inputPos);
-              OnInputUp(i, inputPos);
+              OnInputUp(0, inputPos);
               break;
 
             case TouchState.Canceled:
-              OnInputCanceled(i);
+              OnInputCanceled(0);
               break;
+          }
+        }
+        else if (m_InputSystem.TouchCount() == 2)
+        {
+          var secondaryTouch = m_InputSystem.GetTouch(1);
+          if (secondaryTouch.phase == TouchState.Moved)
+          {
+            var inputPos = new float2(secondaryTouch.x, secondaryTouch.y);
+            var inputDelta = new float2(secondaryTouch.deltaX, secondaryTouch.deltaY);
+            OnSecondaryInputMove(1, inputPos, inputDelta);
           }
         }
       }
@@ -101,7 +111,7 @@ namespace Project
               OnInputClick(-1, inputPos);
         }
 
-        if (m_InputSystem.GetMouseButton(1))
+        if (m_InputSystem.GetMouseButton(1) || m_InputSystem.GetMouseButton(2))
           OnSecondaryInputMove(-1, inputPos, m_InputSystem.GetInputDelta());
       }
     }
@@ -121,22 +131,45 @@ namespace Project
 
     protected virtual void OnInputCanceled(int pointerId) { }
 
-    protected bool castRayAgainstPanels(float2 inputPos, out Entity panelEntity)
+    protected bool castRayAgainstPanelsAndDoors(float2 inputPos, out Entity panelEntity)
     {
       var result = castRay(
+        inputPos, new CollisionFilter()
+        {
+          BelongsTo = 1u << 0 | 1u << 3,
+          CollidesWith = 1u << 0 | 1u << 3,
+          GroupIndex = 0
+        },
+        out Entity entity, out RaycastHit hit);
+
+      panelEntity = entity;
+      return result;
+    }
+
+    protected bool castRayAgainstPanels(float2 inputPos, out Entity panelEntity, out float3 hitPosition)
+    {
+      bool haveHit = castRay(
         inputPos, new CollisionFilter()
         {
           BelongsTo = 1u << 0,
           CollidesWith = 1u << 0,
           GroupIndex = 0
         },
-        out Entity entity);
+        out Entity entity, out RaycastHit hit);
 
       panelEntity = entity;
-      return result;
+
+      if (haveHit)
+      {
+        hitPosition = hit.Position;
+        return true;
+      }
+
+      hitPosition = float3.zero;
+      return false;
     }
 
-    protected bool castRay(float2 inputPos, CollisionFilter filter, out Entity entity)
+    bool castRay(float2 inputPos, CollisionFilter filter, out Entity entity, out RaycastHit hit)
     {
       ref PhysicsWorld physicsWorld = ref World.DefaultGameObjectInjectionWorld.GetExistingSystem<BuildPhysicsWorld>().PhysicsWorld;
 
@@ -151,14 +184,16 @@ namespace Project
         Filter = filter
       };
 
-      if (physicsWorld.CastRay(RaycastInput, out RaycastHit hit))
+      if (physicsWorld.CastRay(RaycastInput, out RaycastHit _hit))
       {
-        entity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity; ;
+        entity = physicsWorld.Bodies[_hit.RigidBodyIndex].Entity;
+        hit = _hit;
         return true;
       }
       else
       {
         entity = Entity.Null;
+        hit = default;
         return false;
       }
     }

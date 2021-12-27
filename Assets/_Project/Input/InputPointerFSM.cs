@@ -15,10 +15,12 @@ namespace Project
       Entities
         .ForEach((ref ModificationModeData modMode) =>
         {
-          if (modMode.Value == ModificationMode.Addition)
+          if (modMode.Value == ModificationMode.PanelAddition)
             _currentState = World.GetOrCreateSystem<PanelAdditionModeState>();
+          else if (modMode.Value == ModificationMode.DoorAddition)
+            _currentState = World.GetOrCreateSystem<DoorAdditionModeState>();
           else
-            _currentState = World.GetOrCreateSystem<PanelSubtractionModeState>();
+            _currentState = World.GetOrCreateSystem<SubtractionModeState>();
         });
 
       _currentState.Update();
@@ -27,7 +29,8 @@ namespace Project
 
     #region states
     [UpdateInGroup(typeof(InputPointerFSM))] public class PanelAdditionModeState : ComponentSystemGroup { }
-    [UpdateInGroup(typeof(InputPointerFSM))] public class PanelSubtractionModeState : ComponentSystemGroup { }
+    [UpdateInGroup(typeof(InputPointerFSM))] public class DoorAdditionModeState : ComponentSystemGroup { }
+    [UpdateInGroup(typeof(InputPointerFSM))] public class SubtractionModeState : ComponentSystemGroup { }
     #endregion
   }
 }

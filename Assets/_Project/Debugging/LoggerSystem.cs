@@ -43,12 +43,30 @@ namespace Project
         ECB.AddSingleFrameComponent(_sceneSettingsEntity, new SwitchPanel_command { Value = PanelType.Thick_240 });
       else if (_inputSystem.GetKeyDown(KeyCode.Alpha9))
         ECB.AddSingleFrameComponent(_sceneSettingsEntity, new SwitchPanel_command { Value = PanelType.Thick_270 });
-      else if (_inputSystem.GetKeyDown(KeyCode.Alpha0))
-        ECB.AddSingleFrameComponent(_sceneSettingsEntity, new SwitchPanel_command { Value = PanelType.Thick_370 });
+
+      if (
+        _inputSystem.GetKeyDown(KeyCode.Alpha1) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha2) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha3) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha4) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha5) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha6) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha7) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha8) ||
+        _inputSystem.GetKeyDown(KeyCode.Alpha9))
+      {
+        ECB.CreateSingleFrameComponent(new ChangeModificationMode_command { Value = ModificationMode.PanelAddition });
+      }
+      
+      if (_inputSystem.GetKeyDown(KeyCode.Alpha0))
+      {
+        ECB.AddSingleFrameComponent(_eventsHolderEntity, new PanelSwitched_event { Value = GetSingleton<SceneSettings>().DoorPrefab });
+        ECB.CreateSingleFrameComponent(new ChangeModificationMode_command { Value = ModificationMode.DoorAddition });
+      }
 
       // change modification mode
       if (_inputSystem.GetKeyDown(KeyCode.Space))
-        ECB.CreateSingleFrameComponent<ChangeModificationMode_command>();
+        ECB.CreateSingleFrameComponent( new ChangeModificationMode_command { Value = ModificationMode.Subtraction});
 
       // panel rotation logic
       if (_inputSystem.GetKeyDown(KeyCode.LeftArrow) || _inputSystem.GetKeyDown(KeyCode.RightArrow))

@@ -17,13 +17,11 @@ namespace Project
     [SerializeField] float3 _areaExtend;
     [Tooltip("the order should be the same order as PanelType enum")]
     [SerializeField] List<PanelDetailsAuthoring> _panelDetails;
-    [SerializeField] Unity.Tiny.Color _panelGhostColor_additionMode;
-    [SerializeField] Unity.Tiny.Color _panelGhostColor_subtractionMode;
+    [SerializeField] GameObject _doorPrefab;
     [SerializeField] GameObject _gridNodeMarkerPrefab;
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
-      Unity.Tiny.Debug.Log("-----start-----");
       var panelPrefabsBuffer = dstManager.AddBuffer<PanelDetails>(entity);
       foreach (PanelDetailsAuthoring detail in _panelDetails)
       {
@@ -46,18 +44,17 @@ namespace Project
         AreaExtend = _areaExtend,
         Rotation = new Rotation { Value = new quaternion(0f, 0f, 0f, 1f) },
         PanelDetails = panelPrefabsBuffer[0],
-        PanelGhostColor_additionMode = _panelGhostColor_additionMode.ToFloat4(),
-        PanelGhostColor_subtractionMode = _panelGhostColor_subtractionMode.ToFloat4(),
+        DoorPrefab = conversionSystem.GetPrimaryEntity(_doorPrefab),
         GridNodeMarkerPrefab = conversionSystem.GetPrimaryEntity(_gridNodeMarkerPrefab)
       };
       dstManager.AddComponentData(entity, settings);
-      Unity.Tiny.Debug.Log("-----end-----");
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
     {
       foreach (var detail in _panelDetails)
         referencedPrefabs.Add(detail.Prefab);
+      referencedPrefabs.Add(_doorPrefab);
       referencedPrefabs.Add(_gridNodeMarkerPrefab);
     }
   }

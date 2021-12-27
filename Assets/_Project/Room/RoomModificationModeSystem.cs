@@ -30,19 +30,17 @@ namespace Project
     {
       var ECB = _ECBSys.CreateCommandBuffer();
 
-      if (!TryGetSingletonEntity<ChangeModificationMode_command>(out Entity _))
+      if (!TryGetSingleton<ChangeModificationMode_command>(out var command))
         return;
 
-      var modMode = GetSingleton<ModificationModeData>();
-      modMode.Value = (modMode.Value == ModificationMode.Addition) ? ModificationMode.Subtraction : ModificationMode.Addition;
-      ECB.SetComponent(_modificationModeEntity, modMode);
+      ECB.SetComponent(_modificationModeEntity, new ModificationModeData { Value = command.Value });
 
       Entities
         .WithEntityQueryOptions(EntityQueryOptions.IncludeDisabled)
         .WithAll<PanelGhost_tag>()
         .ForEach((Entity entity) =>
         {
-          if (modMode.Value == ModificationMode.Subtraction)
+          if (command.Value == ModificationMode.Subtraction)
             disablePanelGhost(ref ECB, ref entity);
           else
             enablePanelGhost(ref ECB, ref entity);

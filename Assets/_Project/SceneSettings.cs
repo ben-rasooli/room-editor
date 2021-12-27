@@ -15,8 +15,7 @@ namespace Project
     public float3 AreaExtend;
     public Rotation Rotation;
     public PanelDetails PanelDetails;
-    public float4 PanelGhostColor_additionMode;
-    public float4 PanelGhostColor_subtractionMode;
+    public Entity DoorPrefab;
     public Entity GridNodeMarkerPrefab;
   }
 

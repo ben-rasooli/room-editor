@@ -17,7 +17,8 @@ namespace Project
       _helpButton = processUIEvents.GetEntityByUIName("Help - Button");
       _messagePanel = processUIEvents.GetEntityByUIName("Message");
       _costText = processUIEvents.GetEntityByUIName("Cost - Text");
-      _countText = processUIEvents.GetEntityByUIName("Count - Text");
+
+      setCostTextVisibility(false);
     }
 
     protected override void OnUpdate()
@@ -54,16 +55,30 @@ namespace Project
         .ForEach((in DynamicBuffer<RoomStat> roomStatsList) =>
         {
           int cost = 0;
-          int count = 0;
           foreach (var stat in roomStatsList)
-          {
             cost += (int)(stat.Count * stat.Price);
-            count += stat.Count;
+          if (cost > 0)
+          {
+            setCostTextVisibility(true);
+            TextLayout.SetEntityTextRendererString(ECB, _costText,  costPrefix + cost.ToString());
           }
-          TextLayout.SetEntityTextRendererString(ECB, _costText, cost.ToString());
-          TextLayout.SetEntityTextRendererString(ECB, _countText, count.ToString());
+          else
+          {
+            setCostTextVisibility(false);
+          }
         }).WithoutBurst().Run();
     }
+    const string costPrefix = "Total: $";
+
+    void setCostTextVisibility(bool visible)
+    {
+      if (_isCostTextVisible == visible) return;
+      var component = EntityManager.GetComponentData<RectTransform>(_costText);
+      component.Hidden = !visible;
+      _isCostTextVisible = visible;
+      EntityManager.SetComponentData(_costText, component);
+    }
+
     EntityCommandBufferSystem _ECBSys;
     Entity _eventsHolderEntity;
     Entity _loadButton;
@@ -72,6 +87,6 @@ namespace Project
     Entity _helpButton;
     Entity _messagePanel;
     Entity _costText;
-    Entity _countText;
+    bool _isCostTextVisible = true;
   }
 }

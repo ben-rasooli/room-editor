@@ -30,7 +30,7 @@
             "IncludeSymbolsForBrowserCallstacks": false,
             "EmitRuntimeMemoryDebugChecks": false,
             "EmitRuntimeAllocationDebugChecks": false,
-            "WebTemplateFolder": ""
+            "WebTemplateFolder": "Assets/WebTemplate"
         },
         {
             "$type": "Unity.Build.Common.SceneList, Unity.Build",

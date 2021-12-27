@@ -20,7 +20,6 @@ public struct RoomDataStructure
   [Serializable]
   public struct door
   {
-    public int thickness;
     public float3 position;
     public float4 rotation;
   }

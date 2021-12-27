@@ -7,13 +7,16 @@ using Unity.Tiny;
 
 namespace Project
 {
-  [UpdateInGroup(typeof(InputPointerFSM.PanelAdditionModeState))]
-  public class RoomModificationSystem_PanelAdditionModeState : ComponentSystem
+  //[AlwaysUpdateSystem]
+  //[UpdateInGroup(typeof(InputPointerFSM.PanelAdditionModeState))]
+  public class RoomModificationSystem_PanelAdditionModeState : SystemBase
   {
     protected override void OnStartRunning()
     {
+      Debug.Log("RoomModificationSystem_PanelAdditionModeState");
       _ECBSys = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
       _eventsHolderEntity = GetSingletonEntity<EventsHolder_tag>();
+      _panelDetailsEntity = GetSingletonEntity<SceneSettings>();
     }
 
     protected override void OnUpdate()
@@ -21,49 +24,51 @@ namespace Project
       var ECB = _ECBSys.CreateCommandBuffer();
 
       Entities
-        .ForEach((ref PanelAddDetails panelAddDetails) =>
+        .ForEach((in AddPanelRequest_command command) =>
         {
           foreach (var panel in RoomData.Value.panels)
-            if (panelAddDetails.Position.Equals(panel.position))
+            if (command.Position.Equals(panel.position))
               return;
 
           var newPanel = new RoomDataStructure.panel
           {
-            height = panelAddDetails.PanelDetails.Height,
-            thickness = panelAddDetails.PanelDetails.Thickness,
-            position = panelAddDetails.Position,
-            rotation = panelAddDetails.Rotation
+            height = command.PanelDetails.Height,
+            thickness = command.PanelDetails.Thickness,
+            position = command.Position,
+            rotation = command.Rotation
           };
           RoomData.Value.panels.Add(newPanel);
 
           ECB.CreateSingleFrameComponent(new AddPanel_command
           {
-            Position = panelAddDetails.Position,
-            Rotation = panelAddDetails.Rotation,
-            PanelDetails = panelAddDetails.PanelDetails
+            Position = command.Position,
+            Rotation = command.Rotation,
+            PanelDetails = command.PanelDetails
           });
           ECB.AddSingleFrameComponent<AddPanel_command>(_eventsHolderEntity);
-        });
-    }
-    EntityCommandBufferSystem _ECBSys;
-    Entity _eventsHolderEntity;
-  }
+        }).WithoutBurst().Run();
 
-  //----------------------------------------------------------------
+      Entities
+        .ForEach((in AddDoorRequest_command command) =>
+        {
+          foreach (var door in RoomData.Value.doors)
+            if (command.Position.Equals(door.position))
+              return;
 
-  [UpdateInGroup(typeof(InputPointerFSM.PanelSubtractionModeState))]
-  public class RoomModificationSystem_PanelSubtractionModeState : ComponentSystem
-  {
-    protected override void OnStartRunning()
-    {
-      _ECBSys = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
-      _panelDetailsEntity = GetSingletonEntity<SceneSettings>();
-      _eventsHolderEntity = GetSingletonEntity<EventsHolder_tag>();
-    }
+          var newDoor = new RoomDataStructure.door
+          {
+            position = command.Position,
+            rotation = command.Rotation.value
+          };
+          RoomData.Value.doors.Add(newDoor);
 
-    protected override void OnUpdate()
-    {
-      var ECB = _ECBSys.CreateCommandBuffer();
+          ECB.CreateSingleFrameComponent(new AddDoor_command
+          {
+            Position = command.Position,
+            Rotation = command.Rotation
+          });
+          ECB.AddSingleFrameComponent<AddDoor_command>(_eventsHolderEntity);
+        }).WithoutBurst().Run();
 
       Entities
         .WithAll<Panel_tag, Remove_tag>()
@@ -81,10 +86,89 @@ namespace Project
               removedPanelDetails = item;
           ECB.CreateSingleFrameComponent(new RemovePanel_command { PanelDetails = removedPanelDetails });
           ECB.AddSingleFrameComponent<RemovePanel_command>(_eventsHolderEntity);
-        });
+        }).WithoutBurst().Run();
+
+      Entities
+        .WithAll<Door_tag, Remove_tag>()
+        .ForEach((ref Translation translation) =>
+        {
+          var position = translation.Value;
+          var doorIndex = RoomData.Value.doors.FindIndex(d => position.Equals(d.position));
+          if (doorIndex < 0) return;
+          RoomData.Value.doors.RemoveAt(doorIndex);
+          ECB.CreateSingleFrameComponent<RemoveDoor_command>();
+          ECB.AddSingleFrameComponent<RemoveDoor_command>(_eventsHolderEntity);
+        }).WithoutBurst().Run();
+
+      _ECBSys.AddJobHandleForProducer(Dependency);
     }
     EntityCommandBufferSystem _ECBSys;
-    Entity _panelDetailsEntity;
     Entity _eventsHolderEntity;
+    Entity _panelDetailsEntity;
   }
+
+  //----------------------------------------------------------------
+
+  //[UpdateInGroup(typeof(InputPointerFSM.DoorAdditionModeState))]
+  //public class RoomModificationSystem_DoorAdditionModeState : ComponentSystem
+  //{
+  //  protected override void OnStartRunning()
+  //  {
+  //    Debug.Log("RoomModificationSystem_PanelAdditionModeState");
+  //    _ECBSys = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+  //    _eventsHolderEntity = GetSingletonEntity<EventsHolder_tag>();
+  //  }
+
+  //  protected override void OnUpdate()
+  //  {
+  //    var ECB = _ECBSys.CreateCommandBuffer();
+
+  //    Entities
+  //      .ForEach((ref DoorAddDetails doorAddDetails) =>
+  //      {
+  //        foreach (var panel in RoomData.Value.panels)
+  //          if (doorAddDetails.Position.Equals(panel.position))
+  //            return;
+
+  //        var newDoor = new RoomDataStructure.door
+  //        {
+  //          position = doorAddDetails.Position,
+  //          rotation = doorAddDetails.Rotation
+  //        };
+  //        RoomData.Value.doors.Add(newDoor);
+
+  //        ECB.CreateSingleFrameComponent(new AddDoor_command
+  //        {
+  //          Position = doorAddDetails.Position,
+  //          Rotation = doorAddDetails.Rotation
+  //        });
+  //        ECB.AddSingleFrameComponent<AddDoor_command>(_eventsHolderEntity);
+  //      });
+  //  }
+  //  EntityCommandBufferSystem _ECBSys;
+  //  Entity _eventsHolderEntity;
+  //}
+
+  //----------------------------------------------------------------
+
+  //[UpdateInGroup(typeof(InputPointerFSM.SubtractionModeState))]
+  //public class RoomModificationSystem_SubtractionModeState : ComponentSystem
+  //{
+  //  protected override void OnStartRunning()
+  //  {
+  //    _ECBSys = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+  //    _panelDetailsEntity = GetSingletonEntity<SceneSettings>();
+  //    _eventsHolderEntity = GetSingletonEntity<EventsHolder_tag>();
+  //  }
+
+  //  protected override void OnUpdate()
+  //  {
+  //    var ECB = _ECBSys.CreateCommandBuffer();
+
+
+  //  }
+  //  EntityCommandBufferSystem _ECBSys;
+  //  Entity _panelDetailsEntity;
+  //  Entity _eventsHolderEntity;
+  //}
 }

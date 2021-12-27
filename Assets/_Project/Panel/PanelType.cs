@@ -18,5 +18,7 @@ namespace Project
     Thick_270,
     Thick_370,
     Thick_460,
+
+    Door
   }
 }
